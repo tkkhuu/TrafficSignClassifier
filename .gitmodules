@@ -1,0 +1,3 @@
+[submodule "TKDNNUtil"]
+	path = TKDNNUtil
+	url = https://github.com/tkkhuu/TKDNNUtil

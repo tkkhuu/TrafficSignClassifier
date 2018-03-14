@@ -1,25 +1,6 @@
-import numpy as np
-from DataLoader import DataLoader
+import TKDNNUtil.DNNBuilder as DNNBuilder
+from DataLoaderTSC import DataLoaderTSC
 from keras.utils import to_categorical
-from sklearn.utils import shuffle
-
-import DNNBuilder
-
-class DataLoaderTSC(DataLoader):
-    
-    def GenerateTrainingBatch(self, samples, batch_size=32, flip_images=False, side_cameras=False):
-        
-        train_samples = samples[0]
-        label_samples = samples[1]
-        num_samples = len(train_samples)
-        while 1: # Loop forever so the generator never terminates
-            X, y = shuffle(train_samples, label_samples)
-            for offset in range(0, num_samples, batch_size):
-                train_batch = train_samples[offset:offset+batch_size]
-                label_batch = label_samples[offset:offset+batch_size]
-                X_train = np.array(train_batch)
-                y_train = np.array(label_batch)
-                yield shuffle(X_train, y_train)
 
 data_loader = DataLoaderTSC()
 
@@ -48,8 +29,6 @@ n_classes = 43
 BATCH_SIZE = 16
 EPOCHS = 8
 
-
-
 print('Train data shape: {}'.format(X_train.shape))
 print('Train label shape: {}'.format(y_train.shape))
 print('Number of training examples: {}'.format(n_train))
@@ -74,10 +53,10 @@ traffic_dnn_layers = (
                         {'layer_type': 'dropout', 'keep_prob': 0.4},
                         {'layer_type': 'flatten'},
                         {'layer_type': 'dropout', 'keep_prob': 0.4},
-                        {'layer_type': 'fully connected', 'output_dim': 400, 'activation': 'relu'},
-                        {'layer_type': 'fully connected', 'output_dim': 120, 'activation': 'relu'},
-                        {'layer_type': 'fully connected', 'output_dim': 84, 'activation': 'relu'},
-                        {'layer_type': 'fully connected', 'output_dim': n_classes, 'activation': 'softmax'}
+                        {'layer_type': 'fully connected', 'units': 400, 'activation': 'relu'},
+                        {'layer_type': 'fully connected', 'units': 120, 'activation': 'relu'},
+                        {'layer_type': 'fully connected', 'units': 84, 'activation': 'relu'},
+                        {'layer_type': 'fully connected', 'units': n_classes, 'activation': 'softmax'}
                      )
 
 print('Creating Network ...')
@@ -89,10 +68,8 @@ traffic_dnn.Initialize()
 print('Compiling Network ...')
 traffic_dnn.Compile('categorical_crossentropy', 'adam')
 
-
-
 print('Training Network ...')
-traffic_dnn.FitAndSave(train_generator, valid_generator, n_train, n_validation, EPOCHS)
+traffic_dnn.FitGenerator(train_generator, validation_data=valid_generator, steps_per_epoch=n_train, validation_steps=n_validation, epochs=EPOCHS)
 
 print('Evaluate Model ...')
 traffic_dnn.Evaluate(X_valid, y_valid)
